@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RbxDownloader - Baixe Assets do Roblox</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        roblox: {
+                            dark: '#111216',
+                            card: '#1B1C22',
+                            border: '#2A2C35'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0d0e12;
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, hsla(225,39%,30%,0.1) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(339,49%,30%,0.1) 0, transparent 50%);
+            background-attachment: fixed;
+        }
+        
+        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .progress-stripes {
+            background-image: linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent);
+            background-size: 1rem 1rem;
+            animation: stripes 1s linear infinite;
+        }
+        @keyframes stripes { from { background-position: 1rem 0; } to { background-position: 0 0; } }
+    </style>
+</head>
+<body class="text-white min-h-screen flex flex-col font-sans overflow-x-hidden">
+
+    <nav class="border-b border-roblox-border bg-roblox-dark/80 backdrop-blur-md sticky top-0 z-40">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-2 cursor-pointer">
+                    <div class="bg-blue-600 p-2 rounded-lg">
+                        <i data-lucide="download-cloud" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <span class="font-bold text-xl tracking-tight">Rbx<span class="text-blue-500">Downloader</span></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow flex flex-col items-center justify-center px-4 py-12">
+        
+        <div class="text-center max-w-3xl mx-auto mb-10 animate-fade-in">
+            <h1 class="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
+                Baixe <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Assets do Roblox</span>
+            </h1>
+            <p class="text-gray-400 text-lg max-w-2xl mx-auto">
+                Insira o ID para processar e extrair o arquivo binario direto da RobloxCDN.
+            </p>
+        </div>
+
+        <div class="w-full max-w-2xl mx-auto bg-roblox-card border border-roblox-border rounded-2xl shadow-2xl p-6 sm:p-8 relative overflow-hidden animate-fade-in">
+            
+            <form id="download-form" class="relative z-10" onsubmit="event.preventDefault(); startDownload();">
+                <label for="asset-id" class="block text-sm font-medium text-gray-300 mb-2">ID numerico do Asset</label>
+                <div class="flex flex-col gap-4">
+                    <div class="relative flex-grow">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-lucide="hash" class="w-5 h-5 text-gray-500"></i>
+                        </div>
+                        <input type="text" id="asset-id" required pattern="[0-9]+" class="block w-full pl-10 pr-4 py-3 bg-[#0a0a0c] border border-roblox-border rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: 123456789">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Formato</label>
+                            <select id="format" class="w-full bg-[#0a0a0c] border border-roblox-border rounded-lg p-2 text-sm text-gray-200 outline-none focus:border-blue-500">
+                                <option value="original">Original</option>
+                                <option value="mp3">.MP3</option>
+                                <option value="mp4">.MP4</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Qualidade</label>
+                            <select id="quality" class="w-full bg-[#0a0a0c] border border-roblox-border rounded-lg p-2 text-sm text-gray-200 outline-none focus:border-blue-500">
+                                <option value="original">Padrao</option>
+                                <option value="high">Alta</option>
+                                <option value="low">Baixa</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="search-btn" class="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 rounded-xl transition-all disabled:opacity-50">
+                        <i data-lucide="download" id="btn-icon" class="w-5 h-5"></i>
+                        <span id="btn-text">Processar Asset</span>
+                    </button>
+                </div>
+            </form>
+
+            <div id="progress-area" class="mt-8 hidden animate-fade-in">
+                <div class="flex justify-between text-sm mb-2">
+                    <span id="status-text" class="text-blue-400 font-medium">Iniciando...</span>
+                    <span id="percentage-text" class="text-gray-400">0%</span>
+                </div>
+                <div class="w-full bg-roblox-border rounded-full h-3 overflow-hidden border border-white/5">
+                    <div id="progress-bar" class="bg-blue-500 h-3 rounded-full progress-stripes transition-all duration-300 ease-out" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div id="result-area" class="mt-8 pt-6 border-t border-roblox-border hidden animate-fade-in">
+                <div class="flex flex-col items-center gap-4 bg-green-500/10 border border-green-500/20 p-6 rounded-xl text-center">
+                    <div class="w-12 h-12 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center mb-2">
+                        <i data-lucide="check" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white mb-1">Processo Concluido!</h3>
+                        <p id="result-filename" class="text-sm text-gray-400 mb-4"></p>
+                    </div>
+                    <a id="download-link" href="#" target="_blank" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 px-6 rounded-lg transition-colors inline-flex items-center gap-2">
+                        <i data-lucide="download" class="w-4 h-4"></i> Baixar Arquivo
+                    </a>
+                </div>
+            </div>
+            
+            <div id="error-area" class="mt-8 hidden animate-fade-in">
+                <div class="flex items-center gap-3 bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl">
+                    <i data-lucide="alert-triangle" class="w-5 h-5 shrink-0"></i>
+                    <p id="error-text" class="text-sm font-medium"></p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+        let pollInterval;
+
+        async function startDownload() {
+            const assetId = document.getElementById('asset-id').value.trim();
+            const format = document.getElementById('format').value;
+            const quality = document.getElementById('quality').value;
+            
+            if (!assetId) return;
+
+            document.getElementById('result-area').classList.add('hidden');
+            document.getElementById('error-area').classList.add('hidden');
+            document.getElementById('progress-area').classList.remove('hidden');
+            
+            const btn = document.getElementById('search-btn');
+            btn.disabled = true;
+            document.getElementById('btn-text').textContent = "Processando...";
+            
+            updateProgressBar(5, "Iniciando requisicao...");
+
+            try {
+                const response = await fetch('/api/download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ asset_id: assetId, format, quality })
+                });
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+
+                pollInterval = setInterval(() => checkStatus(data.task_id), 1000);
+
+            } catch (error) {
+                showError("Erro ao conectar com o servidor.");
+            }
+        }
+
+        async function checkStatus(taskId) {
+            try {
+                const response = await fetch(`/api/status/${taskId}`);
+                const data = await response.json();
+
+                updateProgressBar(data.progress, data.message);
+
+                if (data.status === 'completed') {
+                    clearInterval(pollInterval);
+                    showSuccess(data.result);
+                } else if (data.status === 'error') {
+                    clearInterval(pollInterval);
+                    showError(data.message);
+                }
+
+            } catch (error) {}
+        }
+
+        function updateProgressBar(percentage, message) {
+            document.getElementById('progress-bar').style.width = `${percentage}%`;
+            document.getElementById('percentage-text').textContent = `${percentage}%`;
+            document.getElementById('status-text').textContent = message;
+        }
+
+        function showSuccess(resultData) {
+            document.getElementById('progress-area').classList.add('hidden');
+            document.getElementById('result-area').classList.remove('hidden');
+            
+            document.getElementById('result-filename').textContent = resultData.filename;
+            document.getElementById('download-link').href = resultData.url;
+            
+            resetButton();
+        }
+
+        function showError(message) {
+            document.getElementById('progress-area').classList.add('hidden');
+            document.getElementById('error-area').classList.remove('hidden');
+            document.getElementById('error-text').textContent = message;
+            resetButton();
+        }
+
+        function resetButton() {
+            const btn = document.getElementById('search-btn');
+            btn.disabled = false;
+            document.getElementById('btn-text').textContent = "Processar Novo Asset";
+        }
+    </script>
+</body>
+</html>
