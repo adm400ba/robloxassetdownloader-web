@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
     <script>
         tailwind.config = {
             theme: {
@@ -33,13 +32,11 @@
                 radial-gradient(at 100% 0%, hsla(339,49%,30%,0.1) 0, transparent 50%);
             background-attachment: fixed;
         }
-        
         .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
         .progress-stripes {
             background-image: linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent);
             background-size: 1rem 1rem;
@@ -49,7 +46,6 @@
     </style>
 </head>
 <body class="text-white min-h-screen flex flex-col font-sans overflow-x-hidden">
-
     <nav class="border-b border-roblox-border bg-roblox-dark/80 backdrop-blur-md sticky top-0 z-40">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
@@ -62,52 +58,28 @@
             </div>
         </div>
     </nav>
-
     <main class="flex-grow flex flex-col items-center justify-center px-4 py-12">
-        
         <div class="text-center max-w-3xl mx-auto mb-10 animate-fade-in">
             <h1 class="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
                 Baixe <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Assets do Roblox</span>
             </h1>
             <p class="text-gray-400 text-lg max-w-2xl mx-auto">
-                Insira o ID para processar e extrair o arquivo binario direto da RobloxCDN.
+                Insira o ID para processar (use vírgulas para múltiplos IDs).
             </p>
         </div>
-
         <div class="w-full max-w-2xl mx-auto bg-roblox-card border border-roblox-border rounded-2xl shadow-2xl p-6 sm:p-8 relative overflow-hidden animate-fade-in">
-            
             <form id="download-form" class="relative z-10" onsubmit="event.preventDefault(); startDownload();">
-                <label for="asset-id" class="block text-sm font-medium text-gray-300 mb-2">ID numerico do Asset</label>
+                <label for="asset-id" class="block text-sm font-medium text-gray-300 mb-2">IDs dos Assets</label>
                 <div class="flex flex-col gap-4">
                     <div class="relative flex-grow">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i data-lucide="hash" class="w-5 h-5 text-gray-500"></i>
                         </div>
-                        <input type="text" id="asset-id" required pattern="[0-9]+" class="block w-full pl-10 pr-4 py-3 bg-[#0a0a0c] border border-roblox-border rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: 123456789">
+                        <input type="text" id="asset-id" required class="block w-full pl-10 pr-4 py-3 bg-[#0a0a0c] border border-roblox-border rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: 123456789, 987654321">
                     </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs text-gray-400 mb-1">Formato</label>
-                            <select id="format" class="w-full bg-[#0a0a0c] border border-roblox-border rounded-lg p-2 text-sm text-gray-200 outline-none focus:border-blue-500">
-                                <option value="original">Original</option>
-                                <option value="mp3">.MP3</option>
-                                <option value="mp4">.MP4</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs text-gray-400 mb-1">Qualidade</label>
-                            <select id="quality" class="w-full bg-[#0a0a0c] border border-roblox-border rounded-lg p-2 text-sm text-gray-200 outline-none focus:border-blue-500">
-                                <option value="original">Padrao</option>
-                                <option value="high">Alta</option>
-                                <option value="low">Baixa</option>
-                            </select>
-                        </div>
-                    </div>
-
                     <button type="submit" id="search-btn" class="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 rounded-xl transition-all disabled:opacity-50">
                         <i data-lucide="download" id="btn-icon" class="w-5 h-5"></i>
-                        <span id="btn-text">Processar Asset</span>
+                        <span id="btn-text">Processar Asset(s)</span>
                     </button>
                 </div>
             </form>
@@ -121,6 +93,54 @@
                     <div id="progress-bar" class="bg-blue-500 h-3 rounded-full progress-stripes transition-all duration-300 ease-out" style="width: 0%"></div>
                 </div>
             </div>
+
+            <div id="options-area" class="mt-8 pt-6 border-t border-roblox-border hidden animate-fade-in">
+                <h3 class="text-lg font-bold text-white mb-4">Selecione Formatos e Qualidades</h3>
+                <div id="audio-options" class="mb-4 hidden">
+                    <h4 class="text-sm text-gray-300 mb-2 font-medium">Áudio Detectado</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <select id="audio-format" class="w-full bg-[#0a0a0c] border border-roblox-border rounded-lg p-2 text-sm text-gray-200 outline-none focus:border-blue-500">
+                                <option value=".ogg">.OGG (Original)</option>
+                                <option value=".mp3">.MP3</option>
+                                <option value=".wav">.WAV</option>
+                                <option value=".flac">.FLAC</option>
+                            </select>
+                        </div>
+                        <div>
+                            <select id="audio-quality" class="w-full bg-[#0a0a0c] border border-roblox-border rounded-lg p-2 text-sm text-gray-200 outline-none focus:border-blue-500">
+                                <option value="original">Qualidade Original</option>
+                                <option value="high">Alta (320kbps)</option>
+                                <option value="medium">Média (192kbps)</option>
+                                <option value="low">Baixa (128kbps)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div id="video-options" class="mb-6 hidden">
+                    <h4 class="text-sm text-gray-300 mb-2 font-medium">Vídeo Detectado</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <select id="video-format" class="w-full bg-[#0a0a0c] border border-roblox-border rounded-lg p-2 text-sm text-gray-200 outline-none focus:border-blue-500">
+                                <option value=".webm">.WEBM (Original)</option>
+                                <option value=".mp4">.MP4</option>
+                                <option value=".mov">.MOV</option>
+                            </select>
+                        </div>
+                        <div>
+                            <select id="video-quality" class="w-full bg-[#0a0a0c] border border-roblox-border rounded-lg p-2 text-sm text-gray-200 outline-none focus:border-blue-500">
+                                <option value="original">Resolução Original</option>
+                                <option value="1080p">1080p</option>
+                                <option value="720p">720p</option>
+                                <option value="480p">480p</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="submitOptions()" class="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl transition-all">
+                    Confirmar Conversão
+                </button>
+            </div>
             
             <div id="result-area" class="mt-8 pt-6 border-t border-roblox-border hidden animate-fade-in">
                 <div class="flex flex-col items-center gap-4 bg-green-500/10 border border-green-500/20 p-6 rounded-xl text-center">
@@ -128,7 +148,7 @@
                         <i data-lucide="check" class="w-6 h-6"></i>
                     </div>
                     <div>
-                        <h3 class="text-lg font-bold text-white mb-1">Processo Concluido!</h3>
+                        <h3 class="text-lg font-bold text-white mb-1">Processo Concluído!</h3>
                         <p id="result-filename" class="text-sm text-gray-400 mb-4"></p>
                     </div>
                     <a id="download-link" href="#" target="_blank" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 px-6 rounded-lg transition-colors inline-flex items-center gap-2">
@@ -143,47 +163,37 @@
                     <p id="error-text" class="text-sm font-medium"></p>
                 </div>
             </div>
-
         </div>
     </main>
-
     <script>
         lucide.createIcons();
         let pollInterval;
+        let currentTaskId = null;
 
         async function startDownload() {
-            const assetId = document.getElementById('asset-id').value.trim();
-            const format = document.getElementById('format').value;
-            const quality = document.getElementById('quality').value;
-            
-            if (!assetId) return;
-
+            const assetIds = document.getElementById('asset-id').value.trim();
+            if (!assetIds) return;
             document.getElementById('result-area').classList.add('hidden');
             document.getElementById('error-area').classList.add('hidden');
+            document.getElementById('options-area').classList.add('hidden');
             document.getElementById('progress-area').classList.remove('hidden');
-            
-            const btn = document.getElementById('search-btn');
-            btn.disabled = true;
+            document.getElementById('search-btn').disabled = true;
             document.getElementById('btn-text').textContent = "Processando...";
-            
-            updateProgressBar(5, "Iniciando requisicao...");
+            updateProgressBar(5, "Iniciando requisição...");
 
             try {
                 const response = await fetch('/api/download', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ asset_id: assetId, format, quality })
+                    body: JSON.stringify({ asset_ids: assetIds })
                 });
-
                 const data = await response.json();
-                
                 if (data.error) {
                     showError(data.error);
                     return;
                 }
-
-                pollInterval = setInterval(() => checkStatus(data.task_id), 1000);
-
+                currentTaskId = data.task_id;
+                pollInterval = setInterval(() => checkStatus(currentTaskId), 1500);
             } catch (error) {
                 showError("Erro ao conectar com o servidor.");
             }
@@ -193,18 +203,49 @@
             try {
                 const response = await fetch(`/api/status/${taskId}`);
                 const data = await response.json();
-
                 updateProgressBar(data.progress, data.message);
 
-                if (data.status === 'completed') {
+                if (data.status === 'needs_input') {
+                    clearInterval(pollInterval);
+                    showOptions(data.has_audio, data.has_video);
+                } else if (data.status === 'completed') {
                     clearInterval(pollInterval);
                     showSuccess(data.result);
                 } else if (data.status === 'error') {
                     clearInterval(pollInterval);
                     showError(data.message);
                 }
-
             } catch (error) {}
+        }
+
+        function showOptions(hasAudio, hasVideo) {
+            document.getElementById('progress-area').classList.add('hidden');
+            document.getElementById('options-area').classList.remove('hidden');
+            if (hasAudio) document.getElementById('audio-options').classList.remove('hidden');
+            else document.getElementById('audio-options').classList.add('hidden');
+            if (hasVideo) document.getElementById('video-options').classList.remove('hidden');
+            else document.getElementById('video-options').classList.add('hidden');
+        }
+
+        async function submitOptions() {
+            const req = {
+                audio_fmt: document.getElementById('audio-format').value || "",
+                audio_qual: document.getElementById('audio-quality').value || "",
+                video_fmt: document.getElementById('video-format').value || "",
+                video_qual: document.getElementById('video-quality').value || ""
+            };
+            document.getElementById('options-area').classList.add('hidden');
+            document.getElementById('progress-area').classList.remove('hidden');
+            try {
+                await fetch(`/api/options/${currentTaskId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(req)
+                });
+                pollInterval = setInterval(() => checkStatus(currentTaskId), 1500);
+            } catch (err) {
+                showError("Erro ao enviar opções.");
+            }
         }
 
         function updateProgressBar(percentage, message) {
@@ -216,10 +257,8 @@
         function showSuccess(resultData) {
             document.getElementById('progress-area').classList.add('hidden');
             document.getElementById('result-area').classList.remove('hidden');
-            
             document.getElementById('result-filename').textContent = resultData.filename;
             document.getElementById('download-link').href = resultData.url;
-            
             resetButton();
         }
 
@@ -231,8 +270,7 @@
         }
 
         function resetButton() {
-            const btn = document.getElementById('search-btn');
-            btn.disabled = false;
+            document.getElementById('search-btn').disabled = false;
             document.getElementById('btn-text').textContent = "Processar Novo Asset";
         }
     </script>
