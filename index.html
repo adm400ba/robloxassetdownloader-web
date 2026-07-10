@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RbxDownloader - Baixe Assets do Roblox</title>
+    <title>Roblox Asset Downloader - Download Roblox Assets</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -49,11 +49,11 @@
     <nav class="border-b border-roblox-border bg-roblox-dark/80 backdrop-blur-md sticky top-0 z-40">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
-                <div class="flex items-center gap-2 cursor-pointer">
-                    <div class="bg-blue-600 p-2 rounded-lg">
-                        <i data-lucide="download-cloud" class="w-5 h-5 text-white"></i>
-                    </div>
-                    <span class="font-bold text-xl tracking-tight">Rbx<span class="text-blue-500">Downloader</span></span>
+                <div class="flex items-center gap-3 cursor-pointer">
+                    <svg viewBox="0 0 302.7 302.7" class="w-8 h-8">
+                      <path fill="#FFFFFF" d="M120.5,271.7c-110.9-28.6-120-31-119.9-31.5 C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8s120,30.8,120.1,30.8 c0.2,0,0.2,0.4,0.1,0.9c-0.2,1.5-61.5,239.3-61.7,239.5 C240.6,302.5,186.5,288.7,120.5,271.7z M174.9,158c3.2-12.6,5.9-23.1,6-23.4c0.1-0.5-2.3-1.2-23.2-6.6 c-12.8-3.3-23.5-5.9-23.6-5.8c-0.3,0.3-12.1,46.6-12,46.7 c0.2,0.2,46.7,12.2,46.8,12.1C168.9,180.9,171.6,170.6,174.9,158L174.9,158z"/>
+                    </svg>
+                    <span class="font-bold text-xl tracking-tight">Roblox Asset <span class="text-blue-500">Downloader</span></span>
                 </div>
             </div>
         </div>
@@ -61,15 +61,15 @@
     <main class="flex-grow flex flex-col items-center justify-center px-4 py-12">
         <div class="text-center max-w-3xl mx-auto mb-10 animate-fade-in">
             <h1 class="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
-                Baixe <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Assets do Roblox</span>
+                Download <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Roblox Assets</span>
             </h1>
             <p class="text-gray-400 text-lg max-w-2xl mx-auto">
-                Insira o ID para processar (use vírgulas para múltiplos IDs).
+                Enter the ID to process (use commas for multiple IDs).
             </p>
         </div>
         <div class="w-full max-w-2xl mx-auto bg-roblox-card border border-roblox-border rounded-2xl shadow-2xl p-6 sm:p-8 relative overflow-hidden animate-fade-in">
             <form id="download-form" class="relative z-10" onsubmit="event.preventDefault(); startDownload();">
-                <label for="asset-id" class="block text-sm font-medium text-gray-300 mb-2">IDs dos Assets</label>
+                <label for="asset-id" class="block text-sm font-medium text-gray-300 mb-2">Asset IDs</label>
                 <div class="flex flex-col gap-4">
                     <div class="relative flex-grow">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -79,25 +79,28 @@
                     </div>
                     <button type="submit" id="search-btn" class="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 rounded-xl transition-all disabled:opacity-50">
                         <i data-lucide="download" id="btn-icon" class="w-5 h-5"></i>
-                        <span id="btn-text">Processar Asset(s)</span>
+                        <span id="btn-text">Download Asset</span>
                     </button>
                 </div>
             </form>
 
             <div id="progress-area" class="mt-8 hidden animate-fade-in">
                 <div class="flex justify-between text-sm mb-2">
-                    <span id="status-text" class="text-blue-400 font-medium">Iniciando...</span>
+                    <span id="status-text" class="text-blue-400 font-medium">Starting...</span>
                     <span id="percentage-text" class="text-gray-400">0%</span>
                 </div>
                 <div class="w-full bg-roblox-border rounded-full h-3 overflow-hidden border border-white/5">
                     <div id="progress-bar" class="bg-blue-500 h-3 rounded-full progress-stripes transition-all duration-300 ease-out" style="width: 0%"></div>
                 </div>
+                <button onclick="cancelTask()" class="mt-5 w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-xl transition-all">
+                    Cancel
+                </button>
             </div>
 
             <div id="options-area" class="mt-8 pt-6 border-t border-roblox-border hidden animate-fade-in">
-                <h3 class="text-lg font-bold text-white mb-4">Selecione Formatos e Qualidades</h3>
+                <h3 class="text-lg font-bold text-white mb-4">Select Formats and Qualities</h3>
                 <div id="audio-options" class="mb-4 hidden">
-                    <h4 class="text-sm text-gray-300 mb-2 font-medium">Áudio Detectado</h4>
+                    <h4 class="text-sm text-gray-300 mb-2 font-medium">Audio Detected</h4>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <select id="audio-format" class="w-full bg-[#0a0a0c] border border-roblox-border rounded-lg p-2 text-sm text-gray-200 outline-none focus:border-blue-500">
@@ -109,16 +112,16 @@
                         </div>
                         <div>
                             <select id="audio-quality" class="w-full bg-[#0a0a0c] border border-roblox-border rounded-lg p-2 text-sm text-gray-200 outline-none focus:border-blue-500">
-                                <option value="original">Qualidade Original</option>
-                                <option value="high">Alta (320kbps)</option>
-                                <option value="medium">Média (192kbps)</option>
-                                <option value="low">Baixa (128kbps)</option>
+                                <option value="original">Original Quality</option>
+                                <option value="high">High (320kbps)</option>
+                                <option value="medium">Medium (192kbps)</option>
+                                <option value="low">Low (128kbps)</option>
                             </select>
                         </div>
                     </div>
                 </div>
                 <div id="video-options" class="mb-6 hidden">
-                    <h4 class="text-sm text-gray-300 mb-2 font-medium">Vídeo Detectado</h4>
+                    <h4 class="text-sm text-gray-300 mb-2 font-medium">Video Detected</h4>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <select id="video-format" class="w-full bg-[#0a0a0c] border border-roblox-border rounded-lg p-2 text-sm text-gray-200 outline-none focus:border-blue-500">
@@ -129,7 +132,7 @@
                         </div>
                         <div>
                             <select id="video-quality" class="w-full bg-[#0a0a0c] border border-roblox-border rounded-lg p-2 text-sm text-gray-200 outline-none focus:border-blue-500">
-                                <option value="original">Resolução Original</option>
+                                <option value="original">Original Resolution</option>
                                 <option value="1080p">1080p</option>
                                 <option value="720p">720p</option>
                                 <option value="480p">480p</option>
@@ -137,9 +140,15 @@
                         </div>
                     </div>
                 </div>
-                <button onclick="submitOptions()" class="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl transition-all">
-                    Confirmar Conversão
-                </button>
+                
+                <div class="flex gap-4">
+                    <button onclick="cancelTask()" class="w-1/3 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-xl transition-all">
+                        Cancel
+                    </button>
+                    <button onclick="submitOptions()" class="w-2/3 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl transition-all">
+                        Confirm Conversion
+                    </button>
+                </div>
             </div>
             
             <div id="result-area" class="mt-8 pt-6 border-t border-roblox-border hidden animate-fade-in">
@@ -148,11 +157,11 @@
                         <i data-lucide="check" class="w-6 h-6"></i>
                     </div>
                     <div>
-                        <h3 class="text-lg font-bold text-white mb-1">Processo Concluído!</h3>
+                        <h3 class="text-lg font-bold text-white mb-1">Process Completed!</h3>
                         <p id="result-filename" class="text-sm text-gray-400 mb-4"></p>
                     </div>
                     <a id="download-link" href="#" target="_blank" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 px-6 rounded-lg transition-colors inline-flex items-center gap-2">
-                        <i data-lucide="download" class="w-4 h-4"></i> Baixar Arquivo
+                        <i data-lucide="download" class="w-4 h-4"></i> Download File
                     </a>
                 </div>
             </div>
@@ -178,8 +187,8 @@
             document.getElementById('options-area').classList.add('hidden');
             document.getElementById('progress-area').classList.remove('hidden');
             document.getElementById('search-btn').disabled = true;
-            document.getElementById('btn-text').textContent = "Processando...";
-            updateProgressBar(5, "Iniciando requisição...");
+            document.getElementById('btn-text').textContent = "Processing...";
+            updateProgressBar(5, "Initializing request...");
 
             try {
                 const response = await fetch('/api/download', {
@@ -195,7 +204,7 @@
                 currentTaskId = data.task_id;
                 pollInterval = setInterval(() => checkStatus(currentTaskId), 1500);
             } catch (error) {
-                showError("Erro ao conectar com o servidor.");
+                showError("Error connecting to server.");
             }
         }
 
@@ -214,6 +223,9 @@
                 } else if (data.status === 'error') {
                     clearInterval(pollInterval);
                     showError(data.message);
+                } else if (data.status === 'canceled') {
+                    clearInterval(pollInterval);
+                    showError("Task canceled.");
                 }
             } catch (error) {}
         }
@@ -244,8 +256,21 @@
                 });
                 pollInterval = setInterval(() => checkStatus(currentTaskId), 1500);
             } catch (err) {
-                showError("Erro ao enviar opções.");
+                showError("Error submitting options.");
             }
+        }
+
+        async function cancelTask() {
+            if (currentTaskId) {
+                try {
+                    await fetch(`/api/cancel/${currentTaskId}`, { method: 'POST' });
+                } catch (e) {
+                    console.error("Failed to reach cancel endpoint", e);
+                }
+            }
+            clearInterval(pollInterval);
+            document.getElementById('options-area').classList.add('hidden');
+            showError("Task canceled by user.");
         }
 
         function updateProgressBar(percentage, message) {
@@ -271,7 +296,7 @@
 
         function resetButton() {
             document.getElementById('search-btn').disabled = false;
-            document.getElementById('btn-text').textContent = "Processar Novo Asset";
+            document.getElementById('btn-text').textContent = "Download Asset";
         }
     </script>
 </body>
