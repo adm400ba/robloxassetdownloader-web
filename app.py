@@ -315,11 +315,11 @@ async def download_public_video(session: aiohttp.ClientSession, asset_id: str, c
     headers = {"User-Agent": "Mozilla/5.0"}
     if cookie: headers["Cookie"] = f".ROBLOSECURITY={cookie}"
     async with session.get(url, params=params, headers=headers) as resp:
-        if resp.status != 200: return None, f"Falha HTTP {resp.status}"
+        if resp.status != 200: return None, f"HTTP Failure {resp.status}"
         try: data = await resp.json()
-        except Exception: return None, "Resposta JSON inválida"
+        except Exception: return None, "Invalid JSON response"
         if not data.get("locations") or not data["locations"][0].get("location"):
-            return None, "Manifest vazio"
+            return None, "Empty manifest"
         manifest_url = data["locations"][0]["location"]
 
     parts = manifest_url.split("/manifest.m3u8")
@@ -339,7 +339,7 @@ async def download_public_video(session: aiohttp.ClientSession, asset_id: str, c
                 async for chunk in r.content.iter_chunked(65536): f.write(chunk)
             downloaded_parts.append(part_filename)
         i += 1
-    if not downloaded_parts: return None, "Nenhuma parte encontrada"
+    if not downloaded_parts: return None, "No parts found"
 
     list_filename = os.path.join("downloaded_assets", f"{base_name}_list.txt")
     with open(list_filename, "w", encoding='utf-8') as f:
@@ -353,14 +353,14 @@ async def download_public_video(session: aiohttp.ClientSession, asset_id: str, c
     except asyncio.TimeoutError:
         try: process.kill()
         except Exception: pass
-        return None, "Timeout FFmpeg"
+        return None, "FFmpeg Timeout"
 
     try:
         os.remove(list_filename)
         for p in downloaded_parts: os.remove(p)
     except Exception: pass
     if process.returncode == 0 and os.path.exists(output_filename): return output_filename, None
-    return None, f"Falha FFmpeg (código {process.returncode})"
+    return None, f"FFmpeg failure (code {process.returncode})"
 
 async def download_core(session: aiohttp.ClientSession, asset_id: str):
     details = await fetch_asset_details(session, asset_id, ROBLOX_COOKIE)
@@ -379,7 +379,7 @@ async def download_core(session: aiohttp.ClientSession, asset_id: str):
 
     sanitized_name = sanitize_filename(asset_name)
     if asset_type_id in NO_BINARY_TYPES:
-        return None, "Tipo sem arquivo binário."
+        return None, "No binary file type."
 
     if is_public and asset_type_id == 62:
         return await download_public_video(session, asset_id, ROBLOX_COOKIE, sanitized_name)
@@ -408,15 +408,15 @@ async def download_core(session: aiohttp.ClientSession, asset_id: str):
                     asset_url = test_url
                     break
 
-    if not asset_url: return None, "Asset inacessível ou excluído."
+    if not asset_url: return None, "Asset inaccessible or deleted."
 
     try:
         async with session.get(asset_url) as response:
             if response.status != 200: return None, f"HTTP {response.status}."
             content_type = response.headers.get('Content-Type', '')
-            if 'text/html' in content_type.lower() or 'application/json' in content_type.lower(): return None, "Arquivo inválido retornado."
+            if 'text/html' in content_type.lower() or 'application/json' in content_type.lower(): return None, "Invalid file returned."
             first_chunk = await response.content.read(1024)
-            if not first_chunk: return None, "Arquivo vazio."
+            if not first_chunk: return None, "Empty file."
             final_ext = detect_file_extension(first_chunk, content_type, '.bin')
             os.makedirs("downloaded_assets", exist_ok=True)
             file_path = os.path.join("downloaded_assets", f"{asset_id}_{sanitized_name}{final_ext}")
@@ -425,7 +425,7 @@ async def download_core(session: aiohttp.ClientSession, asset_id: str):
                 async for chunk in response.content.iter_chunked(65536): f.write(chunk)
             if final_ext == '.m3u8':
                 hls_webm_path = await process_hls_playlist(session, file_path, asset_url)
-                if not hls_webm_path: return None, "Falha ao reconstruir HLS."
+                if not hls_webm_path: return None, "Failed to rebuild HLS."
                 file_path = hls_webm_path
             return file_path, None
     except Exception as e:
@@ -439,15 +439,21 @@ async def process_task(task_id: str, ids_list: list):
     
     async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=600)) as session:
         for idx, aid in enumerate(ids_list):
-            task["message"] = f"Baixando {idx+1}/{len(ids_list)}..."
+            if task.get("canceled"): break
+            task["message"] = f"Downloading {idx+1}/{len(ids_list)}..."
             task["progress"] = int(((idx) / len(ids_list)) * 40)
             res, err = await download_core(session, aid)
             if res: downloaded_files.append(res)
             else: errors.append(err)
             
+    if task.get("canceled"):
+        for f in downloaded_files:
+            if os.path.exists(f): os.remove(f)
+        return
+
     if not downloaded_files:
         task["status"] = "error"
-        task["message"] = f"Falha em todos os downloads. {errors[0] if errors else ''}"
+        task["message"] = f"Failed all downloads. {errors[0] if errors else ''}"
         return
 
     task["files"] = downloaded_files
@@ -458,32 +464,44 @@ async def process_task(task_id: str, ids_list: list):
         task["status"] = "needs_input"
         task["has_audio"] = has_a
         task["has_video"] = has_v
-        task["message"] = "Aguardando escolhas de conversão..."
+        task["message"] = "Waiting for conversion choices..."
         task["progress"] = 50
         try:
             await asyncio.wait_for(task["event"].wait(), timeout=300)
         except asyncio.TimeoutError:
             task["status"] = "error"
-            task["message"] = "Sessão expirada."
+            task["message"] = "Session expired."
             for f in downloaded_files:
                 if os.path.exists(f): os.remove(f)
             return
 
+    if task.get("canceled"):
+        for f in downloaded_files:
+            if os.path.exists(f): os.remove(f)
+        return
+
     task["status"] = "processing"
-    task["message"] = "Convertendo arquivos..."
+    task["message"] = "Converting files..."
     new_files = []
     total = len(downloaded_files)
     for idx, f in enumerate(downloaded_files):
+        if task.get("canceled"): break
         task["progress"] = 50 + int((idx / total) * 30)
         if f.endswith('.ogg') and task.get("audio_fmt"):
             f = await convert_media(f, task["audio_fmt"], task["audio_qual"])
         elif f.endswith('.webm') and task.get("video_fmt"):
             f = await convert_media(f, task["video_fmt"], task["video_qual"])
         new_files.append(f)
+        
     downloaded_files = new_files
     task["files"] = downloaded_files
 
-    task["message"] = "Finalizando..."
+    if task.get("canceled"):
+        for f in downloaded_files:
+            if os.path.exists(f): os.remove(f)
+        return
+
+    task["message"] = "Finalizing..."
     task["progress"] = 90
 
     if len(ids_list) > 1 or len(downloaded_files) > 1:
@@ -518,18 +536,19 @@ async def start_download(req: DownloadRequest, background_tasks: BackgroundTasks
     for x in raw_ids:
         if x.isdigit() and x not in ids_list: ids_list.append(x)
     if not ids_list:
-        return {"error": "Nenhum ID válido fornecido."}
+        return {"error": "No valid IDs provided."}
     if len(ids_list) > 20:
-        return {"error": "Limite máximo de 20 assets por lote."}
+        return {"error": "Maximum limit of 20 assets per batch."}
     task_id = str(uuid.uuid4())
     tasks[task_id] = {
         "status": "starting",
         "progress": 0,
-        "message": "Inicializando...",
+        "message": "Initializing...",
         "files": [],
         "event": asyncio.Event(),
         "has_audio": False,
-        "has_video": False
+        "has_video": False,
+        "canceled": False
     }
     background_tasks.add_task(process_task, task_id, ids_list)
     return {"task_id": task_id}
@@ -537,7 +556,7 @@ async def start_download(req: DownloadRequest, background_tasks: BackgroundTasks
 @app.get("/api/status/{task_id}")
 async def get_status(task_id: str):
     if task_id not in tasks:
-        return {"status": "error", "message": "Tarefa não encontrada."}
+        return {"status": "error", "message": "Task not found."}
     t = tasks[task_id]
     return {
         "status": t["status"],
@@ -560,6 +579,17 @@ async def set_options(task_id: str, opts: OptionsRequest):
     if "event" in t:
         t["event"].set()
     return {"success": True}
+
+@app.post("/api/cancel/{task_id}")
+async def cancel_task(task_id: str):
+    if task_id in tasks:
+        tasks[task_id]["canceled"] = True
+        tasks[task_id]["status"] = "canceled"
+        tasks[task_id]["message"] = "Task canceled."
+        if "event" in tasks[task_id]:
+            tasks[task_id]["event"].set()
+        return {"success": True}
+    return {"error": "Task not found."}
 
 @app.get("/api/download/{task_id}")
 async def serve_file(task_id: str):
