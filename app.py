@@ -481,7 +481,7 @@ async def process_task(task_id: str, ids_list: list):
         return
 
     task["status"] = "processing"
-    task["message"] = "Converting files..."
+    task["message"] = "Converting file(s)..."
     new_files = []
     total = len(downloaded_files)
     for idx, f in enumerate(downloaded_files):
