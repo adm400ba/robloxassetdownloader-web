@@ -104,10 +104,13 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <select id="audio-format" class="w-full bg-[#0a0a0c] border border-roblox-border rounded-lg p-2 text-sm text-gray-200 outline-none focus:border-blue-500">
-                                <option value=".ogg">.OGG (Original)</option>
+                                <option value=".ogg">.OGG</option>
                                 <option value=".mp3">.MP3</option>
                                 <option value=".wav">.WAV</option>
                                 <option value=".flac">.FLAC</option>
+                                <option value=".m4a">.M4A</option>
+                                <option value=".aac">.AAC</option>
+                                <option value=".wma">.WMA</option>
                             </select>
                         </div>
                         <div>
@@ -125,7 +128,7 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <select id="video-format" class="w-full bg-[#0a0a0c] border border-roblox-border rounded-lg p-2 text-sm text-gray-200 outline-none focus:border-blue-500">
-                                <option value=".webm">.WEBM (Original)</option>
+                                <option value=".webm">.WEBM</option>
                                 <option value=".mp4">.MP4</option>
                                 <option value=".mov">.MOV</option>
                             </select>
@@ -219,7 +222,7 @@
 
                 if (data.status === 'needs_input') {
                     clearInterval(pollInterval);
-                    showOptions(data.has_audio, data.has_video);
+                    showOptions(data.has_audio, data.has_video, data.orig_audio_fmt, data.orig_video_fmt);
                 } else if (data.status === 'completed') {
                     clearInterval(pollInterval);
                     showSuccess(data.result);
@@ -233,13 +236,36 @@
             } catch (error) {}
         }
 
-        function showOptions(hasAudio, hasVideo) {
+        function showOptions(hasAudio, hasVideo, origAudio, origVideo) {
             document.getElementById('progress-area').classList.add('hidden');
             document.getElementById('options-area').classList.remove('hidden');
-            if (hasAudio) document.getElementById('audio-options').classList.remove('hidden');
-            else document.getElementById('audio-options').classList.add('hidden');
-            if (hasVideo) document.getElementById('video-options').classList.remove('hidden');
-            else document.getElementById('video-options').classList.add('hidden');
+            if (hasAudio) {
+                document.getElementById('audio-options').classList.remove('hidden');
+                updateSelectOriginal('audio-format', origAudio);
+            } else {
+                document.getElementById('audio-options').classList.add('hidden');
+            }
+            if (hasVideo) {
+                document.getElementById('video-options').classList.remove('hidden');
+                updateSelectOriginal('video-format', origVideo);
+            } else {
+                document.getElementById('video-options').classList.add('hidden');
+            }
+        }
+
+        function updateSelectOriginal(selectId, origExt) {
+            const select = document.getElementById(selectId);
+            for (let i = 0; i < select.options.length; i++) {
+                let opt = select.options[i];
+                let val = opt.value;
+                let baseText = opt.text.replace(" (Original)", "");
+                if (val === origExt) {
+                    opt.text = baseText + " (Original)";
+                    select.selectedIndex = i;
+                } else {
+                    opt.text = baseText;
+                }
+            }
         }
 
         async function submitOptions() {
@@ -268,7 +294,6 @@
                 try {
                     await fetch(`/api/cancel/${currentTaskId}`, { method: 'POST' });
                 } catch (e) {
-                    console.error("Failed to reach cancel endpoint", e);
                 }
             }
             clearInterval(pollInterval);
