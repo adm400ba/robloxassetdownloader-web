@@ -141,12 +141,15 @@ async def convert_media(input_path: str, format: str, quality: str) -> str:
     temp_output_name = input_name.rsplit('.', 1)[0] + "_mod" + format
     temp_output_path = os.path.join(input_dir, temp_output_name)
     cmd = ['ffmpeg', '-y', '-nostdin', '-i', input_name]
-    is_audio = format in ['.mp3', '.wav', '.ogg', '.flac']
+    is_audio = format in ['.mp3', '.wav', '.ogg', '.flac', '.m4a', '.aac', '.wma']
     if is_audio:
         if format == '.mp3': cmd.extend(['-c:a', 'libmp3lame'])
         elif format == '.wav': cmd.extend(['-c:a', 'pcm_s16le'])
         elif format == '.ogg': cmd.extend(['-c:a', 'libvorbis'])
         elif format == '.flac': cmd.extend(['-c:a', 'flac'])
+        elif format == '.m4a': cmd.extend(['-c:a', 'aac'])
+        elif format == '.aac': cmd.extend(['-c:a', 'aac'])
+        elif format == '.wma': cmd.extend(['-c:a', 'wmav2'])
         if format not in ['.wav', '.flac']:
             if quality == 'high': cmd.extend(['-b:a', '320k'])
             elif quality == 'medium': cmd.extend(['-b:a', '192k'])
@@ -470,10 +473,15 @@ async def process_task(task_id: str, ids_list: list):
     has_a = any(f.endswith(AUDIO_EXTS) for f in downloaded_files)
     has_v = any(f.endswith('.webm') for f in downloaded_files)
     
+    orig_audio = next((os.path.splitext(f)[1].lower() for f in downloaded_files if f.endswith(AUDIO_EXTS)), "")
+    orig_video = next((os.path.splitext(f)[1].lower() for f in downloaded_files if f.endswith('.webm')), "")
+    
     if has_a or has_v:
         task["status"] = "needs_input"
         task["has_audio"] = has_a
         task["has_video"] = has_v
+        task["orig_audio_fmt"] = orig_audio
+        task["orig_video_fmt"] = orig_video
         task["message"] = "Waiting for conversion choices..."
         task["progress"] = 50
         try:
@@ -558,6 +566,8 @@ async def start_download(req: DownloadRequest, background_tasks: BackgroundTasks
         "event": asyncio.Event(),
         "has_audio": False,
         "has_video": False,
+        "orig_audio_fmt": "",
+        "orig_video_fmt": "",
         "canceled": False
     }
     background_tasks.add_task(process_task, task_id, ids_list)
@@ -574,6 +584,8 @@ async def get_status(task_id: str):
         "message": t["message"],
         "has_audio": t.get("has_audio", False),
         "has_video": t.get("has_video", False),
+        "orig_audio_fmt": t.get("orig_audio_fmt", ""),
+        "orig_video_fmt": t.get("orig_video_fmt", ""),
         "result": t.get("result")
     }
 
