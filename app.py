@@ -43,9 +43,11 @@ class OptionsRequest(BaseModel):
 
 def detect_file_extension(content: bytes, content_type: str, fallback_ext: str) -> str:
     if content.startswith(b'ID3') or content.startswith(b'\xff\xfb') or content.startswith(b'\xff\xf3'): return '.mp3'
+    if content.startswith(b'OggS'): return '.ogg'
+    if content.startswith(b'RIFF'): return '.wav'
+    if content.startswith(b'fLaC'): return '.flac'
     if content.startswith(b'#EXTM3U'): return '.m3u8'
     if content.startswith(b'\x89PNG\r\n\x1a\n'): return '.png'
-    if content.startswith(b'OggS'): return '.ogg'
     if content.startswith(b'\x1aE\xdf\xa3'): return '.webm'
     if content.startswith(b'<roblox!'): return '.rbxm'
     if content.startswith(b'<roblox'): return '.rbxmx'
@@ -54,8 +56,12 @@ def detect_file_extension(content: bytes, content_type: str, fallback_ext: str) 
     
     ctype = content_type.lower()
     if 'audio/mpeg' in ctype or 'audio/mp3' in ctype: return '.mp3'
-    if 'image/png' in ctype: return '.png'
     if 'audio/ogg' in ctype: return '.ogg'
+    if 'audio/wav' in ctype or 'audio/x-wav' in ctype: return '.wav'
+    if 'audio/flac' in ctype or 'audio/x-flac' in ctype: return '.flac'
+    if 'audio/mp4' in ctype or 'audio/m4a' in ctype: return '.m4a'
+    if 'audio/aac' in ctype: return '.aac'
+    if 'image/png' in ctype: return '.png'
     if 'video/webm' in ctype: return '.webm'
     if 'application/xml' in ctype: return '.rbxmx'
     if 'application/json' in ctype: return '.json'
