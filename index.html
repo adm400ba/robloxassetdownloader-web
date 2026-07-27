@@ -173,9 +173,14 @@
             </div>
             
             <div id="error-area" class="mt-8 hidden animate-fade-in">
-                <div class="flex items-center gap-3 bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl">
-                    <i data-lucide="alert-triangle" class="w-5 h-5 shrink-0"></i>
-                    <p id="error-text" class="text-sm font-medium"></p>
+                <div class="relative flex items-center justify-between gap-3 bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="alert-triangle" class="w-5 h-5 shrink-0"></i>
+                        <p id="error-text" class="text-sm font-medium"></p>
+                    </div>
+                    <button onclick="document.getElementById('error-area').classList.add('hidden')" class="text-red-400 hover:text-white transition-colors shrink-0">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
                 </div>
             </div>
         </div>
@@ -321,6 +326,7 @@
             document.getElementById('error-area').classList.remove('hidden');
             document.getElementById('error-text').textContent = message;
             resetButton();
+            lucide.createIcons();
         }
 
         function resetButton() {
