@@ -42,6 +42,7 @@ class OptionsRequest(BaseModel):
     video_qual: str = "original"
 
 def detect_file_extension(content: bytes, content_type: str, fallback_ext: str) -> str:
+    if content.startswith(b'ID3') or content.startswith(b'\xff\xfb') or content.startswith(b'\xff\xf3'): return '.mp3'
     if content.startswith(b'#EXTM3U'): return '.m3u8'
     if content.startswith(b'\x89PNG\r\n\x1a\n'): return '.png'
     if content.startswith(b'OggS'): return '.ogg'
@@ -52,12 +53,14 @@ def detect_file_extension(content: bytes, content_type: str, fallback_ext: str) 
     if content.startswith(b'{"') or content.startswith(b'['): return '.json'
     
     ctype = content_type.lower()
+    if 'audio/mpeg' in ctype or 'audio/mp3' in ctype: return '.mp3'
     if 'image/png' in ctype: return '.png'
     if 'audio/ogg' in ctype: return '.ogg'
     if 'video/webm' in ctype: return '.webm'
     if 'application/xml' in ctype: return '.rbxmx'
     if 'application/json' in ctype: return '.json'
     if 'text/plain' in ctype: return '.txt'
+    
     return fallback_ext
 
 async def fetch_creator_games(session: aiohttp.ClientSession, creator_id: int, creator_type: str):
@@ -457,7 +460,8 @@ async def process_task(task_id: str, ids_list: list):
         return
 
     task["files"] = downloaded_files
-    has_a = any(f.endswith('.ogg') for f in downloaded_files)
+    AUDIO_EXTS = ('.mp3', '.ogg', '.wav', '.flac', '.m4a', '.aac', '.wma')
+    has_a = any(f.endswith(AUDIO_EXTS) for f in downloaded_files)
     has_v = any(f.endswith('.webm') for f in downloaded_files)
     
     if has_a or has_v:
@@ -487,8 +491,8 @@ async def process_task(task_id: str, ids_list: list):
     for idx, f in enumerate(downloaded_files):
         if task.get("canceled"): break
         task["progress"] = 50 + int((idx / total) * 30)
-        if f.endswith('.ogg') and task.get("audio_fmt"):
-            f = await convert_media(f, task["audio_fmt"], task["audio_qual"])
+        if f.endswith(AUDIO_EXTS) and task.get("audio_fmt"):
+            f = await convert_media(f, task["audio_fmt"], task["audio_qual"])            
         elif f.endswith('.webm') and task.get("video_fmt"):
             f = await convert_media(f, task["video_fmt"], task["video_qual"])
         new_files.append(f)
