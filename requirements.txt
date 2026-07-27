@@ -3,3 +3,5 @@ uvicorn
 aiohttp
 colorama
 pydantic
+Flask
+gunicorn
